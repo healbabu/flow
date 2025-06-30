@@ -1,0 +1,436 @@
+{
+  "name": "dd74ebc0-3480-481d-9277-2aed89c28153",
+  "tags": [ "#economy", "#redirect" ],
+  "displayName": "Error handling No match - Agent redirect",
+  "testCaseConversationTurns": [ {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "i want to rent"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "triggeredIntent": {
+        "name": "car_rental.reservation_create"
+      },
+      "currentPage": {
+        "name": "Pickup Location",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "Where would you like to pick it up?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "mimai"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "currentPage": {
+        "name": "Pickup Location",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "I'm sorry, I didn't get that. In which city would you like to pick up the car?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "miami"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "pickup_location": "Miami"
+      },
+      "currentPage": {
+        "name": "Confirm Location",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "Is your drop off location different from your pickup location?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "no"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "pickup_location": "Miami"
+      },
+      "triggeredIntent": {
+        "name": "small_talk.confirmation.no"
+      },
+      "currentPage": {
+        "name": "Rental Duration ",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "What date and time would you like to pick up the vehicle?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "wednesday"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami"
+      },
+      "currentPage": {
+        "name": "Rental Duration ",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "What date and time would you like to drop off the vehicle?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "friday"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami"
+      },
+      "currentPage": {
+        "name": "Confirm Rental Duration",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "So to confirm:\n\nYou will be picking the vehicle up in Miami, 2020-12-02 and dropping it off at the same location, 2020-12-04 \n\nDoes that sound right?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "yes"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami"
+      },
+      "triggeredIntent": {
+        "name": "small_talk.confirmation.yes"
+      },
+      "currentPage": {
+        "name": "Vehicle Disambiguation ",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "Great! Now let's choose a vehicle." ]
+      }, {
+        "text": [ "Would you like an economy or luxury vehicle?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "languageCode": "en",
+        "event": {
+          "event": " No-match 1"
+        }
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami"
+      },
+      "currentPage": {
+        "name": "Vehicle Disambiguation ",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "Would you like an economy or luxury vehicle?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "middle?"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami"
+      },
+      "currentPage": {
+        "name": "Vehicle Disambiguation ",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "Would you like an economy or luxury vehicle?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "economy"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami",
+        "vehicle_type": "economy_vehicle"
+      },
+      "currentPage": {
+        "name": "Economy Options",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "Would you like the Nissan Versa or the Mitsubishi Mirage?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "mirage"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami",
+        "vehicle_model": "Mitsubishi Mirage",
+        "vehicle_type": "economy_vehicle"
+      },
+      "currentPage": {
+        "name": "Confirm Mitsubishi Mirage",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "The Mitsubishi Mirage is $50.33 per day. It fits 4 people and comes with an AM/FM radio. \nWould you like to proceed to payment?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "no"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami"
+      },
+      "triggeredIntent": {
+        "name": "small_talk.confirmation.no"
+      },
+      "currentPage": {
+        "name": "Vehicle Disambiguation ",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "Ok, let's look at other options." ]
+      }, {
+        "text": [ "Would you like an economy or luxury vehicle?" ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  }, {
+    "userInput": {
+      "isWebhookEnabled": true,
+      "input": {
+        "text": {
+          "text": "talk to agent"
+        },
+        "languageCode": "en"
+      }
+    },
+    "virtualAgentOutput": {
+      "sessionParameters": {
+        "drop_off_date_time": {
+          "day": 4,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_date_time": {
+          "day": 2,
+          "month": 12,
+          "year": 2020
+        },
+        "pickup_location": "Miami"
+      },
+      "triggeredIntent": {
+        "name": "small_talk.agent_redirect"
+      },
+      "currentPage": {
+        "name": "End Session",
+        "flow": "Default Start Flow"
+      },
+      "textResponses": [ {
+        "text": [ "One moment while I connect you." ]
+      } ],
+      "currentFlow": {
+        "name": "Default Start Flow"
+      }
+    }
+  } ],
+  "creationTime": {
+    "seconds": 1606859037,
+    "nanos": 351032000
+  }
+}

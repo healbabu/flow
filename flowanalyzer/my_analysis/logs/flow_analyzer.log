@@ -1,0 +1,18 @@
+2025-06-30 13:04:50,195 - __main__ - INFO - Staging directory created: my_analysis\staging
+2025-06-30 13:04:50,204 - gemini_client - INFO - Loaded environment variables from: C:\projects\AI\MCP\DialogFlow\flowanalyzer\.env
+2025-06-30 13:04:50,204 - __main__ - INFO - Starting full DialogFlow analysis...
+2025-06-30 13:04:50,204 - __main__ - INFO - Loading DialogFlow data...
+2025-06-30 13:04:50,205 - __main__ - INFO - Loaded data summary saved: my_analysis\staging\loaded_data_summary.txt
+2025-06-30 13:04:50,205 - __main__ - INFO - Generating PlantUML diagram using LLM...
+2025-06-30 13:04:50,206 - flow_designer - INFO - Creating PlantUML diagram with LLM...
+2025-06-30 13:04:50,206 - gemini_client - INFO - Staging file saved: my_analysis\staging\staging_puml_diagram_generation.txt
+2025-06-30 13:04:50,326 - gemini_client - ERROR - Error calling Gemini API: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+2025-06-30 13:04:50,326 - flow_designer - ERROR - Error creating PUML diagram with LLM: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+2025-06-30 13:04:50,326 - __main__ - INFO - PUML diagram saved to: my_analysis\diagrams\dialogflow_flow.puml
+2025-06-30 13:04:50,326 - __main__ - INFO - Analyzing DialogFlow flow with Gemini...
+2025-06-30 13:04:50,326 - gemini_client - INFO - Staging file saved: my_analysis\staging\staging_flow_analysis.txt
+2025-06-30 13:04:50,405 - gemini_client - ERROR - Error calling Gemini API: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+2025-06-30 13:04:50,405 - gemini_client - ERROR - Error analyzing large data: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+2025-06-30 13:04:50,405 - flow_analyzer - ERROR - Error analyzing flow: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+2025-06-30 13:04:50,405 - __main__ - ERROR - Error analyzing flow: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+2025-06-30 13:04:50,405 - __main__ - ERROR - Analysis failed: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.

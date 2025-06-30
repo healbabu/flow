@@ -1,0 +1,203 @@
+@startuml DialogFlow Car Rental Agent Flow
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+
+title DialogFlow Car Rental Agent - Intent and Flow Connections
+
+' Define colors for different types of components
+skinparam rectangle {
+    BackgroundColor<<Start>> #E8F5E8
+    BorderColor<<Start>> #2E7D32
+    FontColor<<Start>> #1B5E20
+}
+
+skinparam rectangle {
+    BackgroundColor<<Intent>> #E3F2FD
+    BorderColor<<Intent>> #1565C0
+    FontColor<<Intent>> #0D47A1
+}
+
+skinparam rectangle {
+    BackgroundColor<<Page>> #FFF3E0
+    BorderColor<<Page>> #E65100
+    FontColor<<Page>> #BF360C
+}
+
+skinparam rectangle {
+    BackgroundColor<<Confirmation>> #F3E5F5
+    BorderColor<<Confirmation>> #7B1FA2
+    FontColor<<Confirmation>> #4A148C
+}
+
+skinparam rectangle {
+    BackgroundColor<<System>> #FFEBEE
+    BorderColor<<System>> #C62828
+    FontColor<<System>> #B71C1C
+}
+
+' Start Flow
+rectangle "Default Start Flow" <<Start>> {
+    rectangle "Welcome Message" as welcome
+    rectangle "No Match Handler" as noMatch
+    rectangle "No Input Handler" as noInput
+}
+
+' Main Intents
+rectangle "Intents" <<Intent>> {
+    rectangle "car_rental.reservation_create" as reservation_create
+    rectangle "car_rental.economy_option" as economy_option
+    rectangle "car_rental.luxury_option" as luxury_option
+    rectangle "car_rental.compare_cost_economy" as compare_economy
+    rectangle "car_rental.compare_cost_luxury" as compare_luxury
+    rectangle "car_rental.larger_vehicle" as larger_vehicle
+    rectangle "car_rental.return_different_location" as return_diff_location
+    rectangle "small_talk.confirmation.yes" as confirmation_yes
+    rectangle "small_talk.confirmation.no" as confirmation_no
+    rectangle "small_talk.agent_redirect" as agent_redirect
+    rectangle "small_thank.thanks" as thanks
+    rectangle "Default Welcome Intent" as welcome_intent
+    rectangle "Default Negative Intent" as negative_intent
+}
+
+' Flow Pages
+rectangle "Flow Pages" <<Page>> {
+    rectangle "Pickup Location" as pickup_location
+    rectangle "Confirm Location" as confirm_location
+    rectangle "Drop Off Location" as dropoff_location
+    rectangle "Rental Duration" as rental_duration
+    rectangle "Rental Duration (return location differs)" as rental_duration_diff
+    rectangle "Economy Options" as economy_options
+    rectangle "Luxury Options" as luxury_options
+    rectangle "Vehicle Disambiguation" as vehicle_disambiguation
+    rectangle "Payment" as payment
+    rectangle "Contact Agent" as contact_agent
+}
+
+' Confirmation Pages
+rectangle "Confirmation Pages" <<Confirmation>> {
+    rectangle "Confirm Chevy Tahoe" as confirm_chevy
+    rectangle "Confirm Dodge Charger" as confirm_dodge
+    rectangle "Confirm Nissan Versa" as confirm_nissan
+    rectangle "Confirm Mitsubishi Mirage" as confirm_mitsubishi
+    rectangle "Confirm Rental Duration" as confirm_rental_duration
+    rectangle "Confirm Rental Duration (return location differs)" as confirm_rental_duration_diff
+    rectangle "Rental Confirmation" as rental_confirmation
+}
+
+' System Events
+rectangle "System Events" <<System>> {
+    rectangle "sys.no-match-default" as sys_no_match
+    rectangle "sys.no-input-default" as sys_no_input
+    rectangle "No-input Options" as no_input_options
+    rectangle "sys.no-match-1" as sys_no_match_1
+    rectangle "No-Match City" as no_match_city
+}
+
+' Connections from Start Flow
+welcome --> welcome_intent : triggers
+noMatch --> sys_no_match : handles
+noInput --> sys_no_input : handles
+
+' Main flow connections
+reservation_create --> pickup_location : "targets"
+welcome_intent --> welcome : "responds with"
+thanks --> welcome : "responds with"
+agent_redirect --> contact_agent : "targets"
+
+' Pickup Location flow
+pickup_location --> confirm_location : "when pickup_location filled"
+pickup_location --> return_diff_location : "intent triggers"
+return_diff_location --> dropoff_location : "targets"
+
+' Location confirmation flow
+confirm_location --> rental_duration : "next step"
+confirm_location --> rental_duration_diff : "if different return location"
+
+' Rental duration flow
+rental_duration --> confirm_rental_duration : "when dates filled"
+rental_duration_diff --> confirm_rental_duration_diff : "when dates filled"
+
+' Vehicle selection flow
+confirm_rental_duration --> economy_options : "default path"
+confirm_rental_duration_diff --> economy_options : "default path"
+
+' Economy options flow
+economy_options --> luxury_option : "intent triggers"
+economy_options --> larger_vehicle : "intent triggers"
+economy_options --> compare_economy : "intent triggers"
+economy_options --> confirmation_yes : "intent triggers"
+economy_options --> confirm_mitsubishi : "when Mitsubishi Mirage selected"
+economy_options --> confirm_nissan : "when Nissan Versa selected"
+
+' Luxury options flow
+luxury_options --> economy_option : "intent triggers"
+luxury_options --> compare_luxury : "intent triggers"
+luxury_options --> confirmation_yes : "intent triggers"
+luxury_options --> confirm_chevy : "when Chevrolet Tahoe selected"
+luxury_options --> confirm_dodge : "when Dodge Charger selected"
+
+' Vehicle confirmation flow
+confirm_chevy --> payment : "next step"
+confirm_dodge --> payment : "next step"
+confirm_nissan --> payment : "next step"
+confirm_mitsubishi --> payment : "next step"
+
+' Payment flow
+payment --> rental_confirmation : "when payment completed"
+
+' System event handlers
+sys_no_match --> welcome : "fallback"
+sys_no_input --> welcome : "fallback"
+no_input_options --> pickup_location : "targets"
+sys_no_match_1 --> welcome : "fallback"
+no_match_city --> pickup_location : "stays on page"
+
+' Intent relationships
+economy_option --> economy_options : "targets"
+luxury_option --> luxury_options : "targets"
+larger_vehicle --> luxury_options : "targets"
+compare_economy --> economy_options : "stays on page"
+compare_luxury --> luxury_options : "stays on page"
+confirmation_yes --> economy_options : "stays on page"
+confirmation_yes --> luxury_options : "stays on page"
+
+' Error handling
+negative_intent --> welcome : "fallback"
+
+' Notes
+note right of reservation_create
+  Parameters:
+  - pickup_location (@sys.geo-city)
+  - vehicle_type (@vehicle_type)
+  - pickup_date_time (@sys.date-time)
+end note
+
+note right of pickup_location
+  Form Parameters:
+  - pickup_location (required)
+end note
+
+note right of economy_options
+  Form Parameters:
+  - vehicle_model (@vehicle_model)
+  Options: Nissan Versa, Mitsubishi Mirage
+end note
+
+note right of luxury_options
+  Form Parameters:
+  - vehicle_model (@vehicle_model)
+  Options: Chevy Tahoe, Dodge Charger
+end note
+
+note right of payment
+  Form Parameters:
+  - card_type
+  - card_number
+  - billing_name
+  - billing_street_address
+  - billing_zip_code
+end note
+
+@enduml 

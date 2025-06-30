@@ -1,0 +1,14 @@
+# DialogFlow Flow Analyzer Dependencies
+
+# Core dependencies
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+
+# Optional dependencies for enhanced functionality
+# pathlib2>=2.3.0  # For Python < 3.4
+# typing-extensions>=4.0.0  # For enhanced type hints
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# black>=22.0.0
+# flake8>=5.0.0 
