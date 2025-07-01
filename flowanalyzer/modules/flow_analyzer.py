@@ -24,12 +24,36 @@ class FlowAnalyzer:
         self.gemini_client = gemini_client
         self.analysis_prompt = self._load_analysis_prompt()
     
-    def analyze_flow(self, flow_data: Dict[str, Any]) -> str:
+    def analyze_flow(self, consolidated_data: str) -> str:
         """
-        Analyze a DialogFlow flow using Gemini.
+        Analyze a DialogFlow flow using consolidated data.
         
         Args:
-            flow_data: DialogFlow data to analyze
+            consolidated_data: Complete consolidated DialogFlow data as string
+            
+        Returns:
+            Analysis report
+        """
+        try:
+            # Analyze using Gemini with consolidated data
+            analysis_result = self.gemini_client.analyze_consolidated_data(
+                self.analysis_prompt, 
+                consolidated_data,
+                request_id="flow_analysis"
+            )
+            
+            return analysis_result
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing flow: {e}")
+            raise
+    
+    def analyze_flow_from_dict(self, flow_data: Dict[str, Any]) -> str:
+        """
+        Analyze a DialogFlow flow from dictionary data (legacy method for backward compatibility).
+        
+        Args:
+            flow_data: DialogFlow data dictionary
             
         Returns:
             Analysis report
@@ -38,17 +62,11 @@ class FlowAnalyzer:
             # Prepare data for analysis
             context_data = self._prepare_analysis_data(flow_data)
             
-            # Analyze using Gemini with request ID for staging
-            analysis_result = self.gemini_client.analyze_large_data(
-                self.analysis_prompt, 
-                context_data,
-                request_id="flow_analysis"
-            )
-            
-            return analysis_result
+            # Analyze using consolidated approach
+            return self.analyze_flow(context_data)
             
         except Exception as e:
-            self.logger.error(f"Error analyzing flow: {e}")
+            self.logger.error(f"Error analyzing flow from dict: {e}")
             raise
     
     def _prepare_analysis_data(self, flow_data: Dict[str, Any]) -> str:
@@ -124,7 +142,8 @@ class FlowAnalyzer:
 # DialogFlow Flow Analysis Prompt
 
 ## Context
-You are an expert DialogFlow architect tasked with analyzing a conversational flow for potential issues, dead ends, and user experience problems. Your goal is to identify architectural weaknesses and provide actionable recommendations for improvement.
+You are an expert google DialogFlow architect tasked with analyzing a conversational flow for potential issues, dead ends, and user experience problems. Your goal is to identify architectural weaknesses and provide actionable recommendations for improvement.
+The observations should be specific with pointer to the problem and the solution.
 
 ## Analysis Framework
 
@@ -136,9 +155,10 @@ You are an expert DialogFlow architect tasked with analyzing a conversational fl
 
 ### 2. Dead End Detection
 - **Terminal Pages**: Find pages that end sessions without providing continuation options
-- **Error States**: Identify scenarios where users might get stuck due to errors
+- **Exception Handling**: Identify scenarios where users might get stuck due to errors
 - **Missing Handlers**: Look for user inputs that aren't handled
 - **Incomplete Flows**: Find paths that don't lead to logical conclusions
+
 
 ### 3. User Experience Assessment
 - **Flexibility**: Can users navigate freely or are they forced into linear paths?
@@ -186,49 +206,14 @@ You are an expert DialogFlow architect tasked with analyzing a conversational fl
 
 ## Output Format
 
-### Critical Issues (High Priority)
-- List dead ends and terminal points without exit options
-- Identify missing error handlers
-- Point out incomplete user journeys
-- Flag missing navigation options
++--------------------------------------------------------------------------------------
+|Priority|Issue\Observation|Where the issue is located in |Solution|
+|--------|-----------------|----------------------------|--------|
+|High|Dead End|Flow <flow_name> without an exit option|Add an exit option to the flow|
+|Medium|Incomplete Flow|User journey is not complete in <page_name>|Add missing pages to the flow|
+|Low|Missing Error Handler|User gets stuck in an error loop in <page_name>|Add an error handler to the flow|
+|Low|Missing Navigation Option|User gets stuck in a flow without a navigation option in <intent_name>|Add a navigation option to the intent|
 
-### User Experience Issues (Medium Priority)
-- Identify inflexible or linear flows
-- Point out unclear error messages
-- Flag missing information or context
-- Identify confusing confirmation patterns
-
-### Architectural Improvements (Low Priority)
-- Suggest missing intents
-- Recommend better parameter management
-- Propose enhanced error handling
-- Suggest flow optimizations
-
-### Testing Scenarios
-- Provide specific test cases for dead ends
-- Suggest edge case testing scenarios
-- Recommend error condition testing
-- Propose user journey testing
-
-## Evaluation Criteria
-
-### Flow Completeness
-- ✅ All user paths lead to logical conclusions
-- ✅ Users can navigate freely within the flow
-- ✅ Error states have recovery mechanisms
-- ✅ Terminal points provide continuation options
-
-### User Experience
-- ✅ Users have enough information to make decisions
-- ✅ Error messages are helpful and actionable
-- ✅ Confirmation steps are clear and allow corrections
-- ✅ Flow accommodates different user preferences
-
-### Technical Robustness
-- ✅ All required fields are properly validated
-- ✅ System events are handled appropriately
-- ✅ Context is maintained throughout the flow
-- ✅ Fallback mechanisms exist for failures
 
 Please analyze the provided DialogFlow data and provide a comprehensive report following this framework.
 """ 

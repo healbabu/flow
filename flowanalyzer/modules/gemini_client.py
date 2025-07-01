@@ -43,7 +43,7 @@ class GeminiClient:
         
         # Configure Gemini
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.5-pro')
         
         # Create staging directory if specified
         if self.staging_dir:
@@ -218,106 +218,62 @@ class GeminiClient:
         except Exception as e:
             self.logger.error(f"Error saving response file: {e}")
     
-    def chunk_data(self, data: str, max_chunk_size: int = 30000) -> List[str]:
+    def analyze_consolidated_data(self, prompt: str, consolidated_data: str, request_id: str = "consolidated_analysis") -> str:
         """
-        Split large data into chunks for processing.
-        
-        Args:
-            data: Data to chunk
-            max_chunk_size: Maximum size of each chunk
-            
-        Returns:
-            List of data chunks
-        """
-        chunks = []
-        current_chunk = ""
-        
-        lines = data.split('\n')
-        for line in lines:
-            if len(current_chunk) + len(line) + 1 > max_chunk_size:
-                if current_chunk:
-                    chunks.append(current_chunk.strip())
-                current_chunk = line
-            else:
-                current_chunk += '\n' + line if current_chunk else line
-        
-        if current_chunk:
-            chunks.append(current_chunk.strip())
-        
-        return chunks
-    
-    def analyze_large_data(self, prompt: str, data: str, request_id: str = "large_data") -> str:
-        """
-        Analyze large data by chunking it and combining results.
+        Analyze consolidated DialogFlow data without chunking to preserve context.
         
         Args:
             prompt: Analysis prompt
-            data: Data to analyze
+            consolidated_data: Complete consolidated DialogFlow data
             request_id: Unique identifier for this request
             
         Returns:
-            Combined analysis result
+            Analysis result
         """
         try:
-            chunks = self.chunk_data(data)
+            # Combine prompt and consolidated data
+            full_prompt = f"{prompt}\n\nConsolidated DialogFlow Data:\n{consolidated_data}"
             
-            if len(chunks) == 1:
-                return self.analyze_text(prompt, chunks[0], request_id)
-            
-            # Save chunk information to staging file
+            # Save to staging file if staging directory is set
             if self.staging_dir:
-                self._save_chunk_info(request_id, prompt, chunks)
+                self._save_consolidated_staging_file(request_id, prompt, consolidated_data, full_prompt)
             
-            # Analyze each chunk
-            chunk_analyses = []
-            for i, chunk in enumerate(chunks):
-                self.logger.info(f"Analyzing chunk {i+1}/{len(chunks)}")
-                chunk_prompt = f"{prompt}\n\nThis is chunk {i+1} of {len(chunks)}. Focus on this portion of the data."
-                chunk_request_id = f"{request_id}_chunk_{i+1}"
-                analysis = self.analyze_text(chunk_prompt, chunk, chunk_request_id)
-                chunk_analyses.append(analysis)
+            # Generate response
+            response = self.model.generate_content(full_prompt)
             
-            # Combine analyses
-            combined_prompt = """
-            You are tasked with combining multiple analysis results into a single comprehensive report.
-            Each analysis covers a different portion of the same DialogFlow flow.
-            
-            Please combine these analyses into a single coherent report that:
-            1. Eliminates redundancy
-            2. Maintains all important findings
-            3. Organizes information logically
-            4. Provides a unified view of the flow analysis
-            
-            Analysis Results:
-            """
-            
-            combined_context = "\n\n---\n\n".join(chunk_analyses)
-            combined_request_id = f"{request_id}_combined"
-            return self.analyze_text(combined_prompt, combined_context, combined_request_id)
-            
+            if response.text:
+                # Save response to staging file
+                if self.staging_dir:
+                    self._save_response_file(request_id, response.text)
+                return response.text
+            else:
+                raise Exception("No response generated from Gemini")
+                
         except Exception as e:
-            self.logger.error(f"Error analyzing large data: {e}")
+            self.logger.error(f"Error calling Gemini API with consolidated data: {e}")
             raise
     
-    def _save_chunk_info(self, request_id: str, prompt: str, chunks: List[str]) -> None:
+    def _save_consolidated_staging_file(self, request_id: str, prompt: str, consolidated_data: str, full_prompt: str) -> None:
         """
-        Save information about chunked data processing.
+        Save consolidated data prompt and context to staging file for review.
         
         Args:
             request_id: Unique identifier for this request
             prompt: Original prompt
-            chunks: List of data chunks
+            consolidated_data: Complete consolidated data
+            full_prompt: Combined prompt and consolidated data
         """
         try:
-            chunk_info_file = self.staging_dir / f"chunk_info_{request_id}.txt"
+            staging_file = self.staging_dir / f"consolidated_staging_{request_id}.txt"
             
-            with open(chunk_info_file, 'w', encoding='utf-8') as f:
+            with open(staging_file, 'w', encoding='utf-8') as f:
                 f.write("=" * 80 + "\n")
-                f.write("CHUNKED DATA PROCESSING INFO\n")
+                f.write("CONSOLIDATED DIALOGFLOW ANALYSIS - STAGING FILE\n")
                 f.write("=" * 80 + "\n\n")
                 
                 f.write("REQUEST ID: " + request_id + "\n")
-                f.write("NUMBER OF CHUNKS: " + str(len(chunks)) + "\n\n")
+                f.write("TIMESTAMP: " + str(Path().stat().st_mtime) + "\n")
+                f.write("DATA SIZE: " + str(len(consolidated_data)) + " characters\n\n")
                 
                 f.write("-" * 40 + "\n")
                 f.write("ORIGINAL PROMPT\n")
@@ -325,18 +281,23 @@ class GeminiClient:
                 f.write(prompt)
                 f.write("\n\n")
                 
-                for i, chunk in enumerate(chunks):
-                    f.write("-" * 40 + "\n")
-                    f.write(f"CHUNK {i+1} (Length: {len(chunk)} chars)\n")
-                    f.write("-" * 40 + "\n")
-                    f.write(chunk[:500] + "..." if len(chunk) > 500 else chunk)
-                    f.write("\n\n")
+                f.write("-" * 40 + "\n")
+                f.write("CONSOLIDATED DATA PREVIEW (First 1000 chars)\n")
+                f.write("-" * 40 + "\n")
+                f.write(consolidated_data[:1000] + "..." if len(consolidated_data) > 1000 else consolidated_data)
+                f.write("\n\n")
+                
+                f.write("-" * 40 + "\n")
+                f.write("FULL PROMPT PREVIEW (First 1500 chars)\n")
+                f.write("-" * 40 + "\n")
+                f.write(full_prompt[:1500] + "..." if len(full_prompt) > 1500 else full_prompt)
+                f.write("\n\n")
                 
                 f.write("=" * 80 + "\n")
-                f.write("END OF CHUNK INFO\n")
+                f.write("END OF CONSOLIDATED STAGING FILE\n")
                 f.write("=" * 80 + "\n")
             
-            self.logger.info(f"Chunk info file saved: {chunk_info_file}")
+            self.logger.info(f"Consolidated staging file saved: {staging_file}")
             
         except Exception as e:
-            self.logger.error(f"Error saving chunk info file: {e}") 
+            self.logger.error(f"Error saving consolidated staging file: {e}") 

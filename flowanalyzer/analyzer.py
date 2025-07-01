@@ -15,7 +15,6 @@ from typing import Dict, List, Any, Optional
 sys.path.append(os.path.join(os.path.dirname(__file__), 'modules'))
 
 from file_loader import DialogFlowFileLoader
-from flow_designer import FlowDesigner
 from flow_analyzer import FlowAnalyzer
 from gemini_client import GeminiClient
 from utils import setup_logging, create_output_directories
@@ -55,7 +54,6 @@ class DialogFlowAnalyzer:
         # Initialize components
         self.file_loader = DialogFlowFileLoader()
         self.gemini_client = GeminiClient(self.api_key, str(self.staging_dir), self.env_file)
-        self.flow_designer = FlowDesigner(self.gemini_client)
         self.flow_analyzer = FlowAnalyzer(self.gemini_client)
         
         # Store loaded data
@@ -64,162 +62,80 @@ class DialogFlowAnalyzer:
         self.entity_types_data = {}
         self.agent_data = {}
         
-    def load_dialogflow_data(self) -> Dict[str, Any]:
+    def load_dialogflow_data(self) -> str:
         """
-        Load all DialogFlow data from the export directory.
+        Load all DialogFlow data and create a consolidated file.
         
         Returns:
-            Dictionary containing all loaded data
+            Path to the consolidated file
         """
-        self.logger.info("Loading DialogFlow data...")
+        self.logger.info("Loading DialogFlow data and creating consolidated file...")
         
         try:
-            # Load intents
-            intents_path = self.flow_path / "intents"
-            if intents_path.exists():
-                self.intents_data = self.file_loader.load_intents(intents_path)
-                self.logger.info(f"Loaded {len(self.intents_data)} intents")
+            # Create consolidated file
+            consolidated_file_path = self.file_loader.create_consolidated_file(
+                self.flow_path, 
+                self.output_path
+            )
             
-            # Load flows
-            flows_path = self.flow_path / "flows"
-            if flows_path.exists():
-                self.flows_data = self.file_loader.load_flows(flows_path)
-                self.logger.info(f"Loaded {len(self.flows_data)} flows")
+            # Save consolidated file info to staging
+            self._save_consolidated_file_info(consolidated_file_path)
             
-            # Load entity types
-            entity_types_path = self.flow_path / "entityTypes"
-            if entity_types_path.exists():
-                self.entity_types_data = self.file_loader.load_entity_types(entity_types_path)
-                self.logger.info(f"Loaded {len(self.entity_types_data)} entity types")
-            
-            # Load agent configuration
-            agent_file = self.flow_path / "agent.json"
-            if agent_file.exists():
-                self.agent_data = self.file_loader.load_agent_config(agent_file)
-                self.logger.info("Loaded agent configuration")
-            
-            # Save loaded data to staging file for review
-            self._save_loaded_data_to_staging()
-            
-            return {
-                'intents': self.intents_data,
-                'flows': self.flows_data,
-                'entity_types': self.entity_types_data,
-                'agent': self.agent_data
-            }
+            self.logger.info(f"Consolidated file created: {consolidated_file_path}")
+            return consolidated_file_path
             
         except Exception as e:
-            self.logger.error(f"Error loading DialogFlow data: {e}")
+            self.logger.error(f"Error creating consolidated file: {e}")
             raise
     
-    def _save_loaded_data_to_staging(self) -> None:
+    def _save_consolidated_file_info(self, consolidated_file_path: str) -> None:
         """
-        Save loaded DialogFlow data to staging file for review.
+        Save information about the consolidated file to staging.
         """
         try:
-            staging_file = self.staging_dir / "loaded_data_summary.txt"
+            info_file = self.staging_dir / "consolidated_file_info.txt"
             
-            with open(staging_file, 'w', encoding='utf-8') as f:
+            with open(info_file, 'w', encoding='utf-8') as f:
                 f.write("=" * 80 + "\n")
-                f.write("LOADED DIALOGFLOW DATA SUMMARY\n")
+                f.write("CONSOLIDATED FILE INFORMATION\n")
                 f.write("=" * 80 + "\n\n")
                 
+                f.write(f"Consolidated File Path: {consolidated_file_path}\n")
                 f.write(f"Flow Path: {self.flow_path}\n")
                 f.write(f"Output Path: {self.output_path}\n")
                 f.write(f"Staging Directory: {self.staging_dir}\n\n")
                 
-                f.write("-" * 40 + "\n")
-                f.write("AGENT CONFIGURATION\n")
-                f.write("-" * 40 + "\n")
-                f.write(json.dumps(self.agent_data, indent=2, ensure_ascii=False))
-                f.write("\n\n")
-                
-                f.write("-" * 40 + "\n")
-                f.write("INTENTS SUMMARY\n")
-                f.write("-" * 40 + "\n")
-                f.write(f"Total Intents: {len(self.intents_data)}\n")
-                for intent_name, intent_data in self.intents_data.items():
-                    config = intent_data.get('config', {})
-                    f.write(f"- {intent_name}: {config.get('displayName', 'N/A')} (Priority: {config.get('priority', 'N/A')})\n")
-                f.write("\n")
-                
-                f.write("-" * 40 + "\n")
-                f.write("FLOWS SUMMARY\n")
-                f.write("-" * 40 + "\n")
-                f.write(f"Total Flows: {len(self.flows_data)}\n")
-                for flow_name, flow_data in self.flows_data.items():
-                    config = flow_data.get('config', {})
-                    pages = flow_data.get('pages', {})
-                    f.write(f"- {flow_name}: {config.get('displayName', 'N/A')} ({len(pages)} pages)\n")
-                f.write("\n")
-                
-                f.write("-" * 40 + "\n")
-                f.write("ENTITY TYPES SUMMARY\n")
-                f.write("-" * 40 + "\n")
-                f.write(f"Total Entity Types: {len(self.entity_types_data)}\n")
-                for entity_name, entity_data in self.entity_types_data.items():
-                    config = entity_data.get('config', {})
-                    f.write(f"- {entity_name}: {config.get('displayName', 'N/A')}\n")
-                f.write("\n")
+                # Get file size
+                file_size = Path(consolidated_file_path).stat().st_size
+                f.write(f"File Size: {file_size:,} bytes ({file_size/1024:.1f} KB)\n\n")
                 
                 f.write("=" * 80 + "\n")
-                f.write("END OF DATA SUMMARY\n")
+                f.write("END OF CONSOLIDATED FILE INFO\n")
                 f.write("=" * 80 + "\n")
             
-            self.logger.info(f"Loaded data summary saved: {staging_file}")
+            self.logger.info(f"Consolidated file info saved: {info_file}")
             
         except Exception as e:
-            self.logger.error(f"Error saving loaded data summary: {e}")
+            self.logger.error(f"Error saving consolidated file info: {e}")
     
-    def generate_puml_diagram(self) -> str:
+    def analyze_flow(self, consolidated_file_path: str) -> str:
         """
-        Generate a PlantUML diagram from the loaded DialogFlow data using LLM.
+        Analyze the DialogFlow flow using consolidated data.
         
-        Returns:
-            Path to the generated PUML file
-        """
-        self.logger.info("Generating PlantUML diagram using LLM...")
-        
-        try:
-            puml_content = self.flow_designer.create_diagram_with_llm(
-                intents=self.intents_data,
-                flows=self.flows_data,
-                entity_types=self.entity_types_data,
-                agent=self.agent_data
-            )
+        Args:
+            consolidated_file_path: Path to the consolidated file
             
-            # Save PUML file
-            puml_file = self.output_path / "diagrams" / "dialogflow_flow.puml"
-            with open(puml_file, 'w', encoding='utf-8') as f:
-                f.write(puml_content)
-            
-            self.logger.info(f"PUML diagram saved to: {puml_file}")
-            return str(puml_file)
-            
-        except Exception as e:
-            self.logger.error(f"Error generating PUML diagram: {e}")
-            raise
-    
-    def analyze_flow(self) -> str:
-        """
-        Analyze the DialogFlow flow using Gemini LLM.
-        
         Returns:
             Path to the analysis report
         """
-        self.logger.info("Analyzing DialogFlow flow with Gemini...")
+        self.logger.info("Analyzing DialogFlow flow with consolidated data...")
         
         try:
-            # Prepare data for analysis
-            analysis_data = {
-                'intents': self.intents_data,
-                'flows': self.flows_data,
-                'entity_types': self.entity_types_data,
-                'agent': self.agent_data
-            }
+            # Load consolidated data
+            consolidated_data = self.file_loader.load_consolidated_data(consolidated_file_path)
             
-            # Generate analysis
-            analysis_report = self.flow_analyzer.analyze_flow(analysis_data)
+            # Generate analysis using consolidated data
+            analysis_report = self.flow_analyzer.analyze_flow(consolidated_data)
             
             # Save analysis report
             report_file = self.output_path / "reports" / "flow_analysis_report.md"
@@ -235,25 +151,22 @@ class DialogFlowAnalyzer:
     
     def run_full_analysis(self) -> Dict[str, str]:
         """
-        Run the complete analysis pipeline.
+        Run the complete analysis pipeline using consolidated data.
         
         Returns:
             Dictionary with paths to generated files
         """
-        self.logger.info("Starting full DialogFlow analysis...")
+        self.logger.info("Starting full DialogFlow analysis with consolidated data...")
         
         try:
-            # Load data
-            self.load_dialogflow_data()
-            
-            # Generate PUML diagram
-            puml_file = self.generate_puml_diagram()
+            # Load data and create consolidated file
+            consolidated_file_path = self.load_dialogflow_data()
             
             # Analyze flow
-            analysis_file = self.analyze_flow()
+            analysis_file = self.analyze_flow(consolidated_file_path)
             
             results = {
-                'puml_diagram': puml_file,
+                'consolidated_file': consolidated_file_path,
                 'analysis_report': analysis_file,
                 'output_directory': str(self.output_path),
                 'staging_directory': str(self.staging_dir)
@@ -303,17 +216,23 @@ def main():
         print("\n" + "="*50)
         print("ANALYSIS COMPLETED SUCCESSFULLY!")
         print("="*50)
-        print(f"PUML Diagram: {results['puml_diagram']}")
+        print(f"Consolidated File: {results['consolidated_file']}")
         print(f"Analysis Report: {results['analysis_report']}")
         print(f"Output Directory: {results['output_directory']}")
         print(f"Staging Directory: {results['staging_directory']}")
         print("\n" + "="*50)
+        print("CONSOLIDATED DATA APPROACH:")
+        print("✓ All DialogFlow data combined into single file")
+        print("✓ No chunking - preserves complete context")
+        print("✓ Full transparency through staging files")
+        print("✓ Better analysis quality with complete data")
+        print("\n" + "="*50)
         print("STAGING FILES CREATED:")
         print("Check the staging directory to review:")
+        print("- Consolidated file information")
         print("- Context data sent to Gemini")
         print("- Prompts used for analysis")
         print("- Gemini responses")
-        print("- Chunked data processing info")
         print("="*50)
         
     except Exception as e:

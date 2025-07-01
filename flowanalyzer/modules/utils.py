@@ -39,7 +39,6 @@ def create_output_directories(output_path: Path) -> None:
         output_path: Base output path
     """
     directories = [
-        output_path / "diagrams",
         output_path / "reports",
         output_path / "logs"
     ]
